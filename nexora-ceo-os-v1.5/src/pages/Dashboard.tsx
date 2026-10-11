@@ -1,0 +1,253 @@
+import { useLiveQuery } from "dexie-react-hooks";
+import { db } from "../lib/db";
+import { Topbar } from "../components/layout/Topbar";
+import { Card, CardHeader } from "../components/ui/Card";
+import { ProgressRing } from "../components/ui/ProgressRing";
+import { ProgressBar } from "../components/ui/ProgressBar";
+import { PriorityBadge } from "../components/ui/Badge";
+import { Button } from "../components/ui/Button";
+import { Icon } from "../components/ui/Icon";
+import { Skeleton, SkeletonText } from "../components/ui/Skeleton";
+import { EmptyState } from "../components/ui/EmptyState";
+import {
+  Flame, CheckCircle2, Circle, Plus, FileText, Palette, PhoneCall,
+  Target, Zap, Bell, Activity, Clock, ArrowUpRight, ListChecks, Inbox,
+} from "lucide-react";
+
+function todayISO() {
+  return new Date().toISOString().slice(0, 10);
+}
+
+export function Dashboard() {
+  const sprint = useLiveQuery(() => db.sprints.filter((s) => s.active).first());
+  const allContent = useLiveQuery(() => db.content.toArray(), []);
+  const todayTasks = useLiveQuery(() => db.tasks.where("date").equals(todayISO()).toArray(), []);
+  const recentActivity = useLiveQuery(() => db.activity.orderBy("createdAt").reverse().limit(6).toArray(), []);
+
+  const isLoading = allContent === undefined || todayTasks === undefined;
+
+  const content = allContent ?? [];
+  const tasks = todayTasks ?? [];
+
+  const published = content.filter((c) => c.stage === "Published").length;
+  const scheduled = content.filter((c) => c.stage === "Scheduled").length;
+  const approved = content.filter((c) => c.stage === "Approved").length;
+  const ideasWaiting = content.filter((c) => c.stage === "Idea").length;
+  const reviewQueue = content.filter((c) => c.stage === "Review").length;
+  const designQueue = content.filter((c) => c.stage === "Design Notes").length;
+
+  const goal = sprint?.postsPlannedGoal ?? 30;
+  const completionPct = goal ? Math.min(100, Math.round((published / goal) * 100)) : 0;
+
+  const sprintDaysTotal = sprint
+    ? Math.max(1, Math.round((new Date(sprint.endDate).getTime() - new Date(sprint.startDate).getTime()) / 86400000))
+    : 30;
+  const sprintDayIndex = sprint
+    ? Math.min(sprintDaysTotal, Math.max(0, Math.round((Date.now() - new Date(sprint.startDate).getTime()) / 86400000)))
+    : 0;
+  const sprintProgressPct = Math.round((sprintDayIndex / sprintDaysTotal) * 100);
+
+  const doneTasks = tasks.filter((t) => t.done).length;
+  const todayProgressPct = tasks.length ? Math.round((doneTasks / tasks.length) * 100) : 0;
+
+  const totalEstMinutes = tasks.reduce((sum, t) => sum + t.estimatedMinutes, 0);
+  const productivityScore = Math.min(100, Math.round(todayProgressPct * 0.7 + completionPct * 0.3));
+
+  const salesTasks = tasks.filter((t) => t.category === "Sales");
+  const contentTasks = tasks.filter((t) => t.category === "Content" || t.category === "Design");
+
+  const activityIcon = { content: FileText, task: CheckCircle2, sprint: Flame, system: Bell } as const;
+
+  return (
+    <>
+      <Topbar title="Dashboard" subtitle="Your command center — everything that matters, today." />
+
+      <main className="px-6 lg:px-10 py-8 grid grid-cols-12 gap-5 lg:gap-6 max-w-[1600px]" aria-busy={isLoading}>
+        {/* ROW 1 — Sprint + Focus + Productivity */}
+        <Card className="col-span-12 md:col-span-6 lg:col-span-4 p-6 flex flex-col items-center justify-center gap-4">
+          <div className="w-full flex items-center justify-between">
+            <span className="text-[11px] uppercase tracking-wider text-[var(--color-text-tertiary)] font-medium">Current Sprint</span>
+            {sprint && (
+              <span className="text-[11px] px-2 py-0.5 rounded-full bg-[var(--color-gold)]/10 text-[var(--color-gold)] border border-[var(--color-gold)]/20">
+                Phase {sprint.phase}
+              </span>
+            )}
+          </div>
+          {isLoading ? (
+            <div className="flex flex-col items-center gap-4 py-2">
+              <Skeleton className="w-[140px] h-[140px] rounded-full" />
+              <Skeleton className="w-40 h-3" />
+            </div>
+          ) : sprint ? (
+            <>
+              <ProgressRing value={sprintProgressPct} size={140} stroke={10} label={`Day ${sprintDayIndex}/${sprintDaysTotal}`} />
+              <p className="text-[13px] text-[var(--color-text-secondary)] text-center leading-relaxed">{sprint.name}</p>
+            </>
+          ) : (
+            <EmptyState icon={Flame} title="No active sprint" note="Start a sprint to track your 30-day production cycle." />
+          )}
+        </Card>
+
+        <Card className="col-span-12 md:col-span-6 lg:col-span-5 p-0 overflow-hidden">
+          <CardHeader
+            title="Today's Top Priorities"
+            subtitle={isLoading ? undefined : `${doneTasks}/${tasks.length} completed · ${Math.round((totalEstMinutes / 60) * 10) / 10}h planned`}
+            action={<Icon icon={Target} className="text-[var(--color-gold)]" />}
+          />
+          <div className="px-6 pb-6 flex flex-col gap-3">
+            {isLoading &&
+              Array.from({ length: 3 }).map((_, i) => (
+                <div key={i} className="p-4 rounded-[var(--radius-md)] bg-white/[0.03] border border-[var(--color-border-soft)]">
+                  <SkeletonText lines={2} />
+                </div>
+              ))}
+            {!isLoading &&
+              tasks.slice(0, 3).map((t) => (
+                <div key={t.id} className="flex items-start gap-3 p-4 rounded-[var(--radius-md)] bg-white/[0.03] border border-[var(--color-border-soft)] transition-colors duration-[var(--duration-fast)] hover:border-[var(--color-border)]">
+                  <Icon icon={t.done ? CheckCircle2 : Circle} className={t.done ? "text-[var(--color-success)] mt-0.5" : "text-[var(--color-text-tertiary)] mt-0.5"} />
+                  <div className="flex-1 min-w-0">
+                    <div className={`text-[13.5px] font-medium ${t.done ? "line-through text-[var(--color-text-tertiary)]" : "text-[var(--color-text-primary)]"}`}>
+                      {t.title}
+                    </div>
+                    <div className="flex items-center gap-2 mt-1.5">
+                      <PriorityBadge priority={t.priority} />
+                      <span className="text-[11px] text-[var(--color-text-tertiary)] flex items-center gap-1">
+                        <Icon icon={Clock} size={12} /> {t.estimatedMinutes}m
+                      </span>
+                    </div>
+                  </div>
+                </div>
+              ))}
+            {!isLoading && tasks.length === 0 && <EmptyState icon={ListChecks} title="Nothing planned for today" note="Add a task to see it here." compact />}
+          </div>
+        </Card>
+
+        <Card className="col-span-12 md:col-span-12 lg:col-span-3 p-6 flex flex-col items-center justify-center gap-3">
+          <span className="text-[11px] uppercase tracking-wider text-[var(--color-text-tertiary)] font-medium">Productivity Score</span>
+          {isLoading ? (
+            <Skeleton className="w-[110px] h-[110px] rounded-full" />
+          ) : (
+            <>
+              <ProgressRing value={productivityScore} size={110} stroke={8} />
+              <div className="flex items-center gap-1 text-[12px] text-[var(--color-success)]">
+                <Icon icon={ArrowUpRight} size={13} /> On track today
+              </div>
+            </>
+          )}
+        </Card>
+
+        {/* ROW 2 — KPI strip */}
+        {[
+          { label: "Ideas Waiting", value: ideasWaiting },
+          { label: "Design Queue", value: designQueue },
+          { label: "Review Queue", value: reviewQueue },
+          { label: "Approval Queue", value: approved },
+          { label: "Scheduled", value: scheduled },
+          { label: "Published", value: published },
+        ].map((kpi) => (
+          <Card
+            key={kpi.label}
+            className="col-span-6 sm:col-span-4 md:col-span-2 p-5"
+          >
+            <div className="text-[11px] text-[var(--color-text-tertiary)] mb-2">{kpi.label}</div>
+            {isLoading ? <Skeleton className="h-7 w-10" /> : <div className="text-[28px] font-bold tabular-nums leading-none">{kpi.value}</div>}
+          </Card>
+        ))}
+
+        {/* ROW 3 — Monthly goal + Today's progress */}
+        <Card className="col-span-12 lg:col-span-6 p-6">
+          <CardHeader title="Monthly Goal" subtitle={sprint?.monthlyGoal ?? "Set a goal for this sprint"} />
+          <div className="px-6 pb-6 -mt-2">
+            <div className="flex items-center justify-between text-[12px] text-[var(--color-text-secondary)] mb-2">
+              <span>{published} of {goal} posts published</span>
+              <span className="font-semibold text-[var(--color-gold)] tabular-nums">{completionPct}%</span>
+            </div>
+            <ProgressBar value={completionPct} tone="gold" label="Monthly goal completion" />
+          </div>
+        </Card>
+
+        <Card className="col-span-12 lg:col-span-6 p-6">
+          <CardHeader title="Today's Progress" subtitle="Across every task planned today" />
+          <div className="px-6 pb-6 -mt-2">
+            <div className="flex items-center justify-between text-[12px] text-[var(--color-text-secondary)] mb-2">
+              <span>{doneTasks} of {tasks.length} tasks done</span>
+              <span className="font-semibold text-[var(--color-success)] tabular-nums">{todayProgressPct}%</span>
+            </div>
+            <ProgressBar value={todayProgressPct} tone="success" label="Today's task completion" />
+          </div>
+        </Card>
+
+        {/* ROW 4 — Sales / Content tasks + Quick actions */}
+        <Card className="col-span-12 md:col-span-6 lg:col-span-4 p-0">
+          <CardHeader title="Today's Sales Tasks" action={<Icon icon={PhoneCall} className="text-[var(--color-info)]" />} />
+          <div className="px-6 pb-6 flex flex-col gap-2">
+            {salesTasks.length === 0 ? (
+              <EmptyState icon={Inbox} title="Nothing scheduled" compact />
+            ) : (
+              salesTasks.map((t) => (
+                <div key={t.id} className="text-[13px] text-[var(--color-text-secondary)] flex items-center gap-2 py-1.5">
+                  <Icon icon={Circle} size={7} className="text-[var(--color-info)]" /> {t.title}
+                </div>
+              ))
+            )}
+          </div>
+        </Card>
+
+        <Card className="col-span-12 md:col-span-6 lg:col-span-4 p-0">
+          <CardHeader title="Today's Content Tasks" action={<Icon icon={Palette} className="text-[var(--color-gold)]" />} />
+          <div className="px-6 pb-6 flex flex-col gap-2">
+            {contentTasks.length === 0 ? (
+              <EmptyState icon={Inbox} title="Nothing scheduled" compact />
+            ) : (
+              contentTasks.map((t) => (
+                <div key={t.id} className="text-[13px] text-[var(--color-text-secondary)] flex items-center gap-2 py-1.5">
+                  <Icon icon={Circle} size={7} className="text-[var(--color-gold)]" /> {t.title}
+                </div>
+              ))
+            )}
+          </div>
+        </Card>
+
+        <Card className="col-span-12 lg:col-span-4 p-6">
+          <div className="flex items-center gap-2 mb-4">
+            <Icon icon={Zap} className="text-[var(--color-gold)]" />
+            <h2 className="text-[15px] font-semibold">Quick Actions</h2>
+          </div>
+          <div className="grid grid-cols-2 gap-3">
+            <Button variant="secondary" icon={<Icon icon={Plus} size={15} />} className="justify-start">New Idea</Button>
+            <Button variant="secondary" icon={<Icon icon={FileText} size={15} />} className="justify-start">New Task</Button>
+            <Button variant="secondary" icon={<Icon icon={Target} size={15} />} className="justify-start">New Sprint</Button>
+            <Button variant="secondary" icon={<Icon icon={Activity} size={15} />} className="justify-start">Weekly Review</Button>
+          </div>
+        </Card>
+
+        {/* ROW 5 — Recent activity */}
+        <Card className="col-span-12 p-0">
+          <CardHeader title="Recent Activity" action={<Icon icon={Activity} className="text-[var(--color-text-tertiary)]" />} />
+          <div className="px-6 pb-6 flex flex-col divide-y divide-[var(--color-border-soft)]">
+            {recentActivity === undefined &&
+              Array.from({ length: 3 }).map((_, i) => (
+                <div key={i} className="flex items-center gap-3 py-3">
+                  <Skeleton className="w-8 h-8 rounded-full shrink-0" />
+                  <Skeleton className="h-3 flex-1" />
+                </div>
+              ))}
+            {recentActivity &&
+              recentActivity.map((a) => (
+                <div key={a.id} className="flex items-center gap-3 py-3">
+                  <div className="w-8 h-8 rounded-full bg-white/[0.05] flex items-center justify-center shrink-0">
+                    <Icon icon={activityIcon[a.type]} size={14} className="text-[var(--color-gold)]" />
+                  </div>
+                  <span className="text-[13px] text-[var(--color-text-secondary)] flex-1">{a.message}</span>
+                  <span className="text-[11px] text-[var(--color-text-tertiary)] tabular-nums">
+                    {new Date(a.createdAt).toLocaleDateString("en-US", { month: "short", day: "numeric" })}
+                  </span>
+                </div>
+              ))}
+            {recentActivity && recentActivity.length === 0 && <EmptyState icon={Activity} title="No activity yet" note="Actions across the OS will show up here." />}
+          </div>
+        </Card>
+      </main>
+    </>
+  );
+}

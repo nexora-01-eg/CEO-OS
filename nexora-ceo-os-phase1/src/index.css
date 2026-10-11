@@ -1,0 +1,104 @@
+@import "tailwindcss";
+
+/* ============================================================
+   NEXORA CEO OS — DESIGN TOKENS
+   Locked system: colors, spacing, radius. Nothing outside this.
+   ============================================================ */
+@theme {
+  --font-sans: -apple-system, BlinkMacSystemFont, "SF Pro Display", "Segoe UI", "Inter", Roboto, Helvetica, Arial, sans-serif;
+  --font-mono: ui-monospace, "SF Mono", "Cascadia Code", Consolas, monospace;
+
+  /* Color system — exact per brief, no additions */
+  --color-bg: #0B0B0D;
+  --color-surface: #131417;
+  --color-card: #181A1E;
+  --color-card-hover: #1E2126;
+  --color-border: #232529;
+  --color-border-soft: #1C1E22;
+  --color-gold: #D4AF37;
+  --color-gold-soft: #E8C766;
+  --color-gold-dim: #8A712A;
+  --color-text-primary: #F5F5F5;
+  --color-text-secondary: #A9A9A9;
+  --color-text-tertiary: #6B6C70;
+  --color-success: #10B981;
+  --color-warning: #F59E0B;
+  --color-danger: #EF4444;
+  --color-info: #3B82F6;
+
+  /* Spacing scale — locked, no random values */
+  --spacing-1: 4px;
+  --spacing-2: 8px;
+  --spacing-3: 12px;
+  --spacing-4: 16px;
+  --spacing-5: 20px;
+  --spacing-6: 24px;
+  --spacing-8: 32px;
+  --spacing-10: 40px;
+  --spacing-12: 48px;
+  --spacing-16: 64px;
+  --spacing-20: 80px;
+  --spacing-24: 96px;
+
+  /* Radius scale — locked */
+  --radius-sm: 8px;
+  --radius-md: 12px;
+  --radius-lg: 16px;
+  --radius-xl: 20px;
+  --radius-2xl: 24px;
+
+  --ease-premium: cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+html, body, #root {
+  height: 100%;
+  background: var(--color-bg);
+  color: var(--color-text-primary);
+}
+
+body {
+  font-family: var(--font-sans);
+  -webkit-font-smoothing: antialiased;
+  font-feature-settings: "cv11", "ss01";
+}
+
+* {
+  scrollbar-width: thin;
+  scrollbar-color: var(--color-border) transparent;
+}
+::-webkit-scrollbar { width: 8px; height: 8px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: var(--color-border); border-radius: 8px; }
+::-webkit-scrollbar-thumb:hover { background: var(--color-gold-dim); }
+
+:focus-visible {
+  outline: 2px solid var(--color-gold);
+  outline-offset: 2px;
+  border-radius: var(--radius-sm);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}
+
+/* Glassmorphism surface — subtle, readable */
+.glass {
+  background: linear-gradient(180deg, rgba(24,26,30,0.75), rgba(19,20,23,0.85));
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border: 1px solid var(--color-border-soft);
+}
+
+/* Gold glow — used sparingly, signature focus states */
+.gold-glow {
+  box-shadow: 0 0 0 1px rgba(212,175,55,0.25), 0 8px 24px -8px rgba(212,175,55,0.25);
+}
+
+/* Signature: sprint ring gradient stroke */
+.sprint-ring-gradient {
+  stop-color: var(--color-gold);
+}

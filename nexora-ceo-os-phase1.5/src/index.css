@@ -1,0 +1,179 @@
+@import "tailwindcss";
+
+/* ============================================================
+   NEXORA CEO OS — DESIGN TOKENS
+   Locked system: colors, spacing, radius. Nothing outside this.
+   ============================================================ */
+@theme {
+  --font-sans: -apple-system, BlinkMacSystemFont, "SF Pro Display", "Segoe UI", "Inter", Roboto, Helvetica, Arial, sans-serif;
+  --font-mono: ui-monospace, "SF Mono", "Cascadia Code", Consolas, monospace;
+
+  /* Color system — exact per brief, no additions */
+  --color-bg: #0B0B0D;
+  --color-surface: #131417;
+  --color-card: #181A1E;
+  --color-card-hover: #1E2126;
+  --color-border: #232529;
+  --color-border-soft: #1C1E22;
+  --color-gold: #D4AF37;
+  --color-gold-soft: #E8C766;
+  --color-gold-dim: #8A712A;
+  --color-text-primary: #F5F5F5;
+  --color-text-secondary: #A9A9A9;
+  --color-text-tertiary: #6B6C70;
+  --color-success: #10B981;
+  --color-warning: #F59E0B;
+  --color-danger: #EF4444;
+  --color-info: #3B82F6;
+
+  /* Spacing scale — locked, no random values */
+  --spacing-1: 4px;
+  --spacing-2: 8px;
+  --spacing-3: 12px;
+  --spacing-4: 16px;
+  --spacing-5: 20px;
+  --spacing-6: 24px;
+  --spacing-8: 32px;
+  --spacing-10: 40px;
+  --spacing-12: 48px;
+  --spacing-16: 64px;
+  --spacing-20: 80px;
+  --spacing-24: 96px;
+
+  /* Radius scale — locked */
+  --radius-sm: 8px;
+  --radius-md: 12px;
+  --radius-lg: 16px;
+  --radius-xl: 20px;
+  --radius-2xl: 24px;
+
+  --ease-premium: cubic-bezier(0.22, 1, 0.36, 1);
+  --ease-out: cubic-bezier(0.16, 1, 0.3, 1);
+
+  /* Motion duration scale — locked, every transition picks from here */
+  --duration-instant: 100ms;
+  --duration-fast: 150ms;
+  --duration-base: 200ms;
+  --duration-slow: 300ms;
+  --duration-slower: 500ms;
+
+  /* Elevation scale — locked shadow system, neutral (no blue tint) */
+  --shadow-xs: 0 1px 2px 0 rgba(0,0,0,0.4);
+  --shadow-sm: 0 2px 8px -2px rgba(0,0,0,0.45);
+  --shadow-md: 0 8px 24px -8px rgba(0,0,0,0.55);
+  --shadow-lg: 0 16px 40px -12px rgba(0,0,0,0.6);
+  --shadow-gold-sm: 0 2px 12px -2px rgba(212,175,55,0.22);
+  --shadow-gold-md: 0 8px 28px -8px rgba(212,175,55,0.28);
+
+  /* Type scale — locked, referenced instead of ad-hoc px values */
+  --text-xs: 11px;
+  --text-sm: 12px;
+  --text-base: 13px;
+  --text-md: 13.5px;
+  --text-lg: 15px;
+  --text-xl: 18px;
+  --text-2xl: 20px;
+  --text-3xl: 28px;
+}
+
+html, body, #root {
+  height: 100%;
+  background: var(--color-bg);
+  color: var(--color-text-primary);
+}
+
+body {
+  font-family: var(--font-sans);
+  -webkit-font-smoothing: antialiased;
+  font-feature-settings: "cv11", "ss01";
+}
+
+* {
+  scrollbar-width: thin;
+  scrollbar-color: var(--color-border) transparent;
+}
+::-webkit-scrollbar { width: 8px; height: 8px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: var(--color-border); border-radius: 8px; }
+::-webkit-scrollbar-thumb:hover { background: var(--color-gold-dim); }
+
+:focus-visible {
+  outline: 2px solid var(--color-gold);
+  outline-offset: 2px;
+  border-radius: var(--radius-sm);
+  transition: outline-offset var(--duration-fast) var(--ease-out);
+}
+
+/* Selection color — small detail, big polish signal */
+::selection {
+  background: rgba(212,175,55,0.28);
+  color: var(--color-text-primary);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
+/* ============================================================
+   MOTION SYSTEM — entrance + skeleton, both respect reduced-motion
+   ============================================================ */
+@keyframes fade-up {
+  from { opacity: 0; transform: translateY(6px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.animate-fade-up {
+  animation: fade-up var(--duration-slow) var(--ease-out) both;
+}
+
+/* Stagger utility — pair with .animate-fade-up on siblings */
+.stagger-1 { animation-delay: 40ms; }
+.stagger-2 { animation-delay: 80ms; }
+.stagger-3 { animation-delay: 120ms; }
+.stagger-4 { animation-delay: 160ms; }
+.stagger-5 { animation-delay: 200ms; }
+.stagger-6 { animation-delay: 240ms; }
+
+@keyframes skeleton-shimmer {
+  0% { background-position: 200% 0; }
+  100% { background-position: -200% 0; }
+}
+
+.skeleton {
+  background: linear-gradient(
+    100deg,
+    var(--color-card) 40%,
+    var(--color-card-hover) 50%,
+    var(--color-card) 60%
+  );
+  background-size: 200% 100%;
+  animation: skeleton-shimmer 1.6s ease-in-out infinite;
+  border-radius: var(--radius-sm);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .skeleton { animation: none; opacity: 0.6; }
+}
+
+/* Glassmorphism surface — subtle, readable */
+.glass {
+  background: linear-gradient(180deg, rgba(24,26,30,0.75), rgba(19,20,23,0.85));
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border: 1px solid var(--color-border-soft);
+}
+
+/* Gold glow — used sparingly, signature focus states */
+.gold-glow {
+  box-shadow: 0 0 0 1px rgba(212,175,55,0.25), 0 8px 24px -8px rgba(212,175,55,0.25);
+}
+
+/* Signature: sprint ring gradient stroke */
+.sprint-ring-gradient {
+  stop-color: var(--color-gold);
+}

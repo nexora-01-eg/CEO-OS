@@ -1,0 +1,158 @@
+@import "tailwindcss";
+
+/* ============================================================
+   NEXORA CEO OS — DESIGN TOKENS
+   Locked system. Every value below is deliberate — nothing random,
+   nothing duplicated, nothing outside this scale.
+   ============================================================ */
+@theme {
+  --font-sans: -apple-system, BlinkMacSystemFont, "SF Pro Display", "Segoe UI", "Inter", Roboto, Helvetica, Arial, sans-serif;
+  --font-mono: ui-monospace, "SF Mono", "Cascadia Code", Consolas, monospace;
+
+  /* Color system — true neutral black scale (R=G=B, zero chroma).
+     Gold is the only chromatic accent; everything else is achromatic gray. */
+  --color-bg: #0B0B0D;
+  --color-surface: #131417;
+  --color-card: #181A1E;
+  --color-card-hover: #1F1F21;
+  --color-border: #242427;
+  --color-border-soft: #1D1D1F;
+  --color-gold: #D4AF37;
+  --color-gold-soft: #E8C766;
+  --color-gold-dim: #8A712A;
+  --color-text-primary: #F5F5F5;
+  --color-text-secondary: #A9A9A9;
+  --color-text-tertiary: #6E6E71;
+  --color-success: #10B981;
+  --color-warning: #F59E0B;
+  --color-danger: #EF4444;
+  --color-info: #3B82F6;
+
+  /* Spacing scale — locked, no random values */
+  --spacing-1: 4px;
+  --spacing-2: 8px;
+  --spacing-3: 12px;
+  --spacing-4: 16px;
+  --spacing-5: 20px;
+  --spacing-6: 24px;
+  --spacing-8: 32px;
+  --spacing-10: 40px;
+  --spacing-12: 48px;
+  --spacing-16: 64px;
+  --spacing-20: 80px;
+  --spacing-24: 96px;
+
+  /* Radius scale — locked */
+  --radius-sm: 8px;
+  --radius-md: 12px;
+  --radius-lg: 16px;
+  --radius-xl: 20px;
+  --radius-2xl: 24px;
+
+  /* Motion system — one easing curve, three durations. Nothing ad hoc. */
+  --ease-premium: cubic-bezier(0.22, 1, 0.36, 1);
+  --duration-fast: 150ms;
+  --duration-base: 250ms;
+  --duration-slow: 450ms;
+}
+
+html, body, #root {
+  height: 100%;
+  background: var(--color-bg);
+  color: var(--color-text-primary);
+}
+
+body {
+  font-family: var(--font-sans);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  font-feature-settings: "cv11", "ss01", "tnum" 0;
+  text-rendering: optimizeLegibility;
+}
+
+/* Tabular numbers wherever figures must not jitter in width */
+.tabular-nums, .font-mono {
+  font-feature-settings: "tnum" 1;
+  font-variant-numeric: tabular-nums;
+}
+
+* {
+  scrollbar-width: thin;
+  scrollbar-color: var(--color-border) transparent;
+}
+::-webkit-scrollbar { width: 8px; height: 8px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: var(--color-border); border-radius: 8px; }
+::-webkit-scrollbar-thumb:hover { background: var(--color-gold-dim); }
+
+/* Focus ring — one consistent treatment app-wide, keyboard-only */
+:focus-visible {
+  outline: 2px solid var(--color-gold);
+  outline-offset: 2px;
+  border-radius: var(--radius-sm);
+}
+:focus:not(:focus-visible) {
+  outline: none;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
+/* ============================================================
+   ELEVATION SYSTEM — soft glass shadows only, no hard shadows.
+   Three resting levels + one hover level + one focus glow.
+   ============================================================ */
+:root {
+  --shadow-sm: 0 1px 2px rgba(0,0,0,0.24), 0 1px 1px rgba(0,0,0,0.16);
+  --shadow-md: 0 8px 24px -8px rgba(0,0,0,0.45), 0 2px 8px -2px rgba(0,0,0,0.3);
+  --shadow-lg: 0 20px 48px -16px rgba(0,0,0,0.55), 0 4px 16px -4px rgba(0,0,0,0.35);
+  --shadow-gold-glow: 0 0 0 1px rgba(212,175,55,0.22), 0 8px 24px -8px rgba(212,175,55,0.28);
+  --shadow-focus: 0 0 0 3px rgba(212,175,55,0.18);
+}
+
+/* Glassmorphism surface — subtle, readable, neutral (no blue cast) */
+.glass {
+  background: linear-gradient(180deg, rgba(24,24,24,0.72), rgba(19,19,19,0.86));
+  backdrop-filter: blur(20px) saturate(1.1);
+  -webkit-backdrop-filter: blur(20px) saturate(1.1);
+  border: 1px solid var(--color-border-soft);
+}
+
+.gold-glow {
+  box-shadow: var(--shadow-gold-glow);
+}
+
+/* Skeleton shimmer — loading state, neutral gray, one shared animation */
+@keyframes shimmer {
+  0% { background-position: -200% 0; }
+  100% { background-position: 200% 0; }
+}
+.skeleton {
+  background: linear-gradient(90deg, var(--color-border-soft) 25%, var(--color-border) 50%, var(--color-border-soft) 75%);
+  background-size: 200% 100%;
+  animation: shimmer 1.6s ease-in-out infinite;
+  border-radius: var(--radius-sm);
+}
+
+/* Shared reveal for content that just mounted (cards, lists) */
+@keyframes fade-up {
+  from { opacity: 0; transform: translateY(6px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+.animate-fade-up {
+  animation: fade-up var(--duration-slow) var(--ease-premium) both;
+}
+
+@keyframes pulse-dot {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.35; }
+}
+.animate-pulse-dot {
+  animation: pulse-dot 2s var(--ease-premium) infinite;
+}
